@@ -211,7 +211,17 @@ export async function GET(req: Request) {
                         if (globalMatches) rawSlots = globalMatches.filter(m => !m.includes('__:'));
                     }
 
-                    const bookingSlot = Array.from(new Set(rawSlots.map(s => cleanSlot(s)).filter(s => s.length > 0))).join(' | ') || 'MISSING';
+                    // 🎾 CLEANUP: Filter out rawSlots that are just a single time (likely noise from header)
+                    // We only want slots that look like a date + time range or a range "XX:XX - YY:YY"
+                    const finalizedSlots = Array.from(new Set(rawSlots.map(s => cleanSlot(s)).filter(s => s.length > 0)));
+
+                    // Specific fix for the "messy pipes" - if we have a proper range, remove the standalone pieces
+                    const bookingSlot = finalizedSlots.filter(s => {
+                        const hasRange = s.includes('-');
+                        const hasDate = datePattern.test(s);
+                        return hasRange || hasDate;
+                    }).join(' | ') || (finalizedSlots[0] || 'MISSING');
+
                     const gameDate = extractDateOnly(bookingSlot);
                     const gameTime = extractTimeOnly(bookingSlot);
 

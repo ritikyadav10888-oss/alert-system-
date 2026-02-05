@@ -77,7 +77,9 @@ export async function GET(req: Request) {
 
         const searchDate = new Date();
         searchDate.setDate(searchDate.getDate() - daysToSync);
-        const searchCriteria = [['SINCE', searchDate.toISOString()]];
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const searchDateStr = `${searchDate.getDate()}-${months[searchDate.getMonth()]}-${searchDate.getFullYear()}`;
+        const searchCriteria = [['SINCE', searchDateStr]];
 
         const fetchOptions = {
             bodies: ['HEADER.FIELDS (SUBJECT FROM DATE)'],
@@ -150,9 +152,8 @@ export async function GET(req: Request) {
 
                     let rawSlots: string[] = [];
                     const lines = normalizedText.split('\n');
-                    const keywords = ['slot', 'booking date', 'match date', 'start time', 'booking time', 'venue', 'purchase', 'event date', 'match time', 'transaction', 'invoice'];
-
-                    const datePattern = /(\d{1,2}\s+\w{3},\s*\d{4})|(\w{3},?\s+\d{1,2},?\s*\d{4})|(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})|(?:Tomorrow|Today)/i;
+                    const keywords = ['slot', 'booking date', 'match date', 'start time', 'booking time', 'venue', 'purchase', 'event date', 'match time', 'transaction', 'invoice', 'date of play', 'booking details', 'booked for'];
+                    const datePattern = /(\d{1,2}\s+\w{3},\s*\d{4})|(\w{3},?\s+\d{1,2},?\s*\d{4})|(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})|(?:Tomorrow|Today)|(\w{4,9},?\s+\d{1,2} \w{3})/i;
                     const timePattern = /(\d{1,2}:\d{2}\s*(?:AM|PM))/i;
 
                     for (const kw of keywords) {

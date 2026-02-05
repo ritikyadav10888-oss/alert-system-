@@ -143,6 +143,20 @@ export default function Home() {
         }
     };
 
+    // 📅 Help format messy date strings for the UI
+    const formatGameDate = (dateStr: string) => {
+        if (!dateStr || dateStr === 'TBD' || dateStr === '-' || dateStr === 'MISSING') return "TBD";
+        try {
+            // Special handling for Khelomore '26 format
+            const cleanStr = dateStr.replace(/'(\d{2})/, '20$1');
+            const date = new Date(cleanStr);
+            if (!isNaN(date.getTime())) {
+                return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+        } catch (e) { }
+        return dateStr;
+    };
+
     // Sort History Logic (Newest at top)
     const sortedHistory = [...bookingHistory].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 

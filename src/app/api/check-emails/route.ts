@@ -93,11 +93,13 @@ export async function GET(req: Request) {
         const candidates: any[] = [];
 
         const existingHistory = await getBookings();
-        let existingUids = new Set(existingHistory.map((h: any) => h.id.toString()));
+        const existingUids = new Set(existingHistory.map((h: any) => h.id.toString()));
+        const missingUids = new Set(existingHistory.filter((h: any) => h.bookingSlot === 'MISSING').map((h: any) => h.id.toString()));
 
         for (const item of recentMessages) {
             const uid = item.attributes.uid.toString();
-            if (existingUids.has(uid)) continue;
+            // Skip only if it exists AND is not marked as MISSING
+            if (existingUids.has(uid) && !missingUids.has(uid)) continue;
 
             const headerPart = item.parts.find((part: any) => part.which === 'HEADER.FIELDS (SUBJECT FROM DATE)');
             const subject = headerPart?.body?.subject?.[0] || "No Subject";

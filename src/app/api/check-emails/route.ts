@@ -176,6 +176,12 @@ export async function GET(req: Request) {
                                 const line = lines[i]?.trim();
                                 if (!line || line.includes('__:')) continue;
 
+                                // 🛡️ QUOTA SHIELD: Ignore email header lines (Date, Sent, From, etc.)
+                                const headerCheck = line.toLowerCase();
+                                if (headerCheck.startsWith('date:') || headerCheck.startsWith('sent:') || headerCheck.startsWith('from:')) {
+                                    continue;
+                                }
+
                                 const dMatch = line.match(datePattern);
                                 const tMatch = line.match(timePattern);
 

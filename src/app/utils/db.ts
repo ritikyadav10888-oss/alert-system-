@@ -1,62 +1,61 @@
-import { adminDb } from './firebase-admin';
-import { isDev } from './db-config'; // I'll create this to share isDev logic
+import { kv } from '@vercel/kv';
+import fs from 'fs';
+import path from 'path';
+import { isDev } from './db-config';
 
-const DB_COLLECTION = isDev ? 'bookings_test' : 'bookings';
+const DB_FILE = isDev ? 'bookings_test.json' : 'bookings.json';
+const DB_PATH = path.join(process.cwd(), 'data', DB_FILE);
+const KV_KEY = isDev ? 'bookings_test' : 'bookings';
 
 export const getBookings = async (): Promise<any[]> => {
-    try {
-        const snapshot = await adminDb.collection(DB_COLLECTION)
-            .orderBy('timestamp', 'desc')
-            .limit(1000)
-            .get();
-
-        return snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                ...data,
-                id: doc.id,
-                // Convert Admin Timestamp to Date
-                timestamp: data.timestamp?.toDate() || new Date(data.timestamp)
-            };
-        });
-    } catch (e) {
-        console.error("Firestore Admin Fetch Error:", e);
-        return [];
+    if (isDev) {
+        if (!fs.existsSync(DB_PATH)) return [];
+        try {
+            return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+        } catch (e) {
+            return [];
+        }
+    } else {
+        // Production: Use Vercel KV
+        try {
+            const data = await kv.get<any[]>(KV_KEY);
+            return data || [];
+        } catch (e) {
+            console.error("KV Fetch Error:", e);
+            return [];
+        }
     }
 };
 
 export const saveBookings = async (bookings: any[]): Promise<void> => {
-    try {
-        const batch = adminDb.batch();
+    // Safety: Only keep the latest 1000 items
+    const cappedBookings = bookings.slice(0, 1000);
 
-        for (const booking of bookings) {
-            const bookingId = booking.id.toString();
-            const docRef = adminDb.collection(DB_COLLECTION).doc(bookingId);
-
-            const timestamp = booking.timestamp instanceof Date
-                ? booking.timestamp
-                : new Date(booking.timestamp);
-
-            batch.set(docRef, {
-                ...booking,
-                timestamp: timestamp,
-                updatedAt: new Date()
-            }, { merge: true });
+    if (isDev) {
+        if (!fs.existsSync(path.dirname(DB_PATH))) {
+            fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
         }
-
-        await batch.commit();
-    } catch (e) {
-        console.error("Firestore Admin Save Error:", e);
+        fs.writeFileSync(DB_PATH, JSON.stringify(cappedBookings, null, 2));
+    } else {
+        // Production: Use Vercel KV
+        try {
+            await kv.set(KV_KEY, cappedBookings);
+        } catch (e) {
+            console.error("KV Save Error:", e);
+        }
     }
 };
 
 export const clearHistory = async (): Promise<void> => {
-    try {
-        const snapshot = await adminDb.collection(DB_COLLECTION).get();
-        const batch = adminDb.batch();
-        snapshot.docs.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-    } catch (e) {
-        console.error("Firestore Admin Clear Error:", e);
+    if (isDev) {
+        if (fs.existsSync(DB_PATH)) {
+            fs.writeFileSync(DB_PATH, JSON.stringify([], null, 2));
+        }
+    } else {
+        try {
+            await kv.set(KV_KEY, []);
+        } catch (e) {
+            console.error("KV Clear Error:", e);
+        }
     }
 };

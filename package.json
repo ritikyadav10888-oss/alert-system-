@@ -12,8 +12,6 @@
   "dependencies": {
     "@types/mailparser": "^3.4.6",
     "@vercel/kv": "^3.0.0",
-    "firebase": "^12.8.0",
-    "firebase-admin": "^13.6.1",
     "imap-simple": "^5.1.0",
     "mailparser": "^3.9.3",
     "next": "14.2.5",

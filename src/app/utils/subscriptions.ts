@@ -1,39 +1,54 @@
-import fs from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
+import { isDev } from './db-config';
 
-const SUBS_PATH = path.join(process.cwd(), 'data', 'subscriptions.json');
-
-export interface PushSubscriptionData {
-    id: string;
-    subscription: any;
+interface LocationSubscription {
     location: string;
-    timestamp: number;
+    subscription: any;
+    timestamp: string;
 }
 
-export const getSubscriptions = (): PushSubscriptionData[] => {
-    if (!fs.existsSync(path.dirname(SUBS_PATH))) {
-        fs.mkdirSync(path.dirname(SUBS_PATH), { recursive: true });
-    }
-    if (!fs.existsSync(SUBS_PATH)) {
-        return [];
-    }
-    try {
-        return JSON.parse(fs.readFileSync(SUBS_PATH, 'utf-8'));
-    } catch (e) {
-        return [];
+// Memory fallback for development
+let memorySubscriptions: LocationSubscription[] = [];
+const KV_SUBS_KEY = isDev ? 'push_subscriptions_test' : 'push_subscriptions';
+
+export const saveSubscription = async (location: string, subscription: any) => {
+    const newSub: LocationSubscription = {
+        location,
+        subscription,
+        timestamp: new Date().toISOString()
+    };
+
+    if (isDev) {
+        // Remove existing for this subscription if exists
+        memorySubscriptions = memorySubscriptions.filter(s =>
+            JSON.stringify(s.subscription) !== JSON.stringify(subscription)
+        );
+        memorySubscriptions.push(newSub);
+    } else {
+        // Production: Save to Vercel KV
+        try {
+            const current = await getSubscriptions();
+            const filtered = current.filter(s =>
+                JSON.stringify(s.subscription) !== JSON.stringify(subscription)
+            );
+            filtered.push(newSub);
+            await kv.set(KV_SUBS_KEY, filtered);
+        } catch (e) {
+            console.error('KV Subscription Save Error:', e);
+        }
     }
 };
 
-export const saveSubscription = (data: PushSubscriptionData) => {
-    const subs = getSubscriptions();
-    // Use endpoint as unique key for the device
-    const existingIdx = subs.findIndex(s => s.subscription.endpoint === data.subscription.endpoint);
-
-    if (existingIdx !== -1) {
-        subs[existingIdx] = data; // Update
+export const getSubscriptions = async (): Promise<LocationSubscription[]> => {
+    if (isDev) {
+        return memorySubscriptions;
     } else {
-        subs.push(data); // Add new
+        try {
+            const data = await kv.get<LocationSubscription[]>(KV_SUBS_KEY);
+            return data || [];
+        } catch (e) {
+            console.error('KV Subscription Fetch Error:', e);
+            return [];
+        }
     }
-
-    fs.writeFileSync(SUBS_PATH, JSON.stringify(subs, null, 2));
 };

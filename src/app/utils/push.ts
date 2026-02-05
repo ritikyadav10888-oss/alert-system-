@@ -23,9 +23,10 @@ const initWebPush = () => {
 export const sendPushNotification = async (location: string, payload: { title: string, body: string, url?: string }) => {
     if (!initWebPush()) return;
 
-    const subscriptions = getSubscriptions();
+    // getSubscriptions already handles checking Vercel KV or local memory
+    const subscriptions = await getSubscriptions();
 
-    // Filter by location (Targeted) or include all if location is missing/generic (Broadcast)
+    // Filter by location (Targeted) or include all if location is generic (Broadcast)
     const targetSubs = subscriptions.filter(sub => {
         if (!location || location === 'Unknown' || location === 'General') return true;
         return sub.location === location;
@@ -38,8 +39,6 @@ export const sendPushNotification = async (location: string, payload: { title: s
             .catch(err => {
                 console.error('Push error:', err);
                 if (err.statusCode === 410 || err.statusCode === 404) {
-                    // Subscription has expired or is no longer valid
-                    // We should ideally remove it, but for now we just log it
                     console.log('Subscription expired/invalid');
                 }
             })

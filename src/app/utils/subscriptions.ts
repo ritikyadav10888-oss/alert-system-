@@ -18,9 +18,13 @@ const getRedisClient = () => {
     if (!redis) {
         const url = process.env.REDIS_URL || process.env.KV_URL || '';
         if (url) {
+            // Validation: ioredis needs redis:// or rediss://
+            if (url.startsWith('https://')) return null;
+
             redis = new Redis(url, {
                 tls: { rejectUnauthorized: false },
-                maxRetriesPerRequest: 3
+                maxRetriesPerRequest: 3,
+                connectTimeout: 10000
             });
         }
     }

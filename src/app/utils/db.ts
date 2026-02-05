@@ -17,13 +17,25 @@ let redis: Redis | null = null;
 const getRedisClient = () => {
     if (isDev) return null;
     if (!redis) {
+        // PRIORITY: REDIS_URL -> KV_URL
         const url = process.env.REDIS_URL || process.env.KV_URL || '';
         if (url) {
-            console.log(`[REDIS_READY] Initializing ioredis client (Masked: ${url.substring(0, 10)}...)`);
+            if (url.startsWith('https://')) {
+                console.error(`[REDIS_ERROR] Protocol Mismatch! Found REST URL (${url.substring(0, 15)}...) but ioredis requires a redis:// or rediss:// protocol. Check your REDIS_URL environment variable.`);
+                return null;
+            }
+            console.log(`[REDIS_READY] Initializing ioredis client (Protocol: ${url.startsWith('rediss') ? 'Secure' : 'Standard'})`);
             redis = new Redis(url, {
                 tls: { rejectUnauthorized: false },
-                maxRetriesPerRequest: 3
+                maxRetriesPerRequest: 3,
+                connectTimeout: 10000
             });
+
+            redis.on('error', (err) => {
+                console.error('[REDIS_ERROR] ioredis internal error:', err.message);
+            });
+        } else {
+            console.warn('[REDIS_WARN] No Redis URL found in environment variables (REDIS_URL or KV_URL).');
         }
     }
     return redis;

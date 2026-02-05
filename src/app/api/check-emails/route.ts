@@ -41,8 +41,27 @@ function extractTimeOnly(slot: string): string {
     // Look for AM/PM formats
     const timeMatches = slot.match(/(\d{1,2}:\d{2}\s*(?:AM|PM)(?:\s*-\s*\d{1,2}:\d{2}\s*(?:AM|PM))?)/gi);
     if (!timeMatches) return "";
-    // If we have "Date, Time | Date, Time", return "Time1 | Time2"
-    return Array.from(new Set(timeMatches)).join(' | ');
+
+    // Sort so ranges (containing "-") come first
+    const sorted = Array.from(new Set(timeMatches)).sort((a, b) => {
+        const aHasRange = a.includes('-');
+        const bHasRange = b.includes('-');
+        if (aHasRange && !bHasRange) return -1;
+        if (!aHasRange && bHasRange) return 1;
+        return 0;
+    });
+
+    const final: string[] = [];
+    for (const t of sorted) {
+        // If this is a single time, check if it's already "inside" one of our ranges
+        if (!t.includes('-')) {
+            const isInside = final.some(f => f.includes(t));
+            if (isInside) continue;
+        }
+        final.push(t);
+    }
+
+    return final.join(' | ');
 }
 
 export async function GET(req: Request) {

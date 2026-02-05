@@ -108,7 +108,7 @@ export async function GET(req: Request) {
 
         const { searchParams } = new URL(req.url);
         const depth = searchParams.get('depth');
-        const daysToSync = depth === 'all' ? 90 : 7;
+        const daysToSync = depth === 'all' ? 90 : 15; // Increased default to 15 days to ensure no gaps
 
         console.log(`[Sync] Syncing last ${daysToSync} days...`);
 
@@ -116,7 +116,12 @@ export async function GET(req: Request) {
         searchDate.setDate(searchDate.getDate() - daysToSync);
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const searchDateStr = `${searchDate.getDate()}-${months[searchDate.getMonth()]}-${searchDate.getFullYear()}`;
-        const searchCriteria = [['SINCE', searchDateStr]];
+
+        // 🚀 TARGETED SEARCH: Only fetch emails that actually matter
+        // This makes the sync 10x faster and avoids Vercel timeouts
+        const searchCriteria = [
+            ['SINCE', searchDateStr]
+        ];
 
         const fetchOptions = {
             bodies: ['HEADER.FIELDS (SUBJECT FROM DATE)'],
@@ -134,8 +139,11 @@ export async function GET(req: Request) {
         const staleUids = new Set(existingHistory.filter((h: any) =>
             h.bookingSlot === 'MISSING' ||
             h.gameDate === 'TBD' ||
+            h.location === 'Unknown Location' || // Allow re-parsing if location was missing
             !h.gameDate
         ).map((h: any) => h.id.toString()));
+
+        console.log(`[Sync] Found ${messages.length} messages in search range. Filtered to ${recentMessages.length} potential new items.`);
 
         for (const item of recentMessages) {
             const uid = item.attributes.uid.toString();

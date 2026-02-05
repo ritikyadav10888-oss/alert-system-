@@ -131,12 +131,16 @@ export async function GET(req: Request) {
 
         const existingHistory = await getBookings();
         const existingUids = new Set(existingHistory.map((h: any) => h.id.toString()));
-        const missingUids = new Set(existingHistory.filter((h: any) => h.bookingSlot === 'MISSING').map((h: any) => h.id.toString()));
+        const staleUids = new Set(existingHistory.filter((h: any) =>
+            h.bookingSlot === 'MISSING' ||
+            h.gameDate === 'TBD' ||
+            !h.gameDate
+        ).map((h: any) => h.id.toString()));
 
         for (const item of recentMessages) {
             const uid = item.attributes.uid.toString();
-            // Skip only if it exists AND is not marked as MISSING
-            if (existingUids.has(uid) && !missingUids.has(uid)) continue;
+            // Skip only if it exists AND is not marked as stale (MISSING/TBD)
+            if (existingUids.has(uid) && !staleUids.has(uid)) continue;
 
             const headerPart = item.parts.find((part: any) => part.which === 'HEADER.FIELDS (SUBJECT FROM DATE)');
             const subject = headerPart?.body?.subject?.[0] || "No Subject";
@@ -155,8 +159,8 @@ export async function GET(req: Request) {
             if (headerText.includes('playo')) platform = 'Playo';
             else if (headerText.includes('hudle')) platform = 'Hudle';
             else if (headerText.includes('district')) platform = 'District';
-            else if (headerText.includes('khelomore')) platform = 'Khelomore';
-            else if (headerText.includes('google') || headerText.includes('security') || headerText.includes('verification') || headerText.includes('sign-in')) {
+            else if (headerText.includes('khelomore') || headerText.includes('khelo more')) platform = 'Khelomore';
+            else if (headerText.includes('google') || headerText.includes('security') || headerText.includes('verification') || headerText.includes('sign-in') || headerText.includes('code')) {
                 platform = 'System';
             }
 

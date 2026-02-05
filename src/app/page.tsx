@@ -455,7 +455,16 @@ export default function Home() {
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedHistory.length === 0 ? (
+                            {!isHistoryLoaded ? (
+                                // ⚡ LOADING SKELETON ROWS ⚡
+                                [1, 2, 3, 4, 5].map(i => (
+                                    <tr key={`skeleton-${i}`} className={styles.skeletonRow}>
+                                        <td colSpan={8} style={{ padding: '15px 10px' }}>
+                                            <div className={styles.skeletonLine}></div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : sortedHistory.length === 0 ? (
                                 <tr>
                                     <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
                                         📭 No bookings yet.

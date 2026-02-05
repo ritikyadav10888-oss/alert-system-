@@ -108,8 +108,13 @@ export async function GET(req: Request) {
             const from = headerPart?.body?.from?.[0] || "";
             const headerText = (subject + " " + from).toLowerCase();
 
+            console.log(`[Sync_Debug] Processing UID: ${uid} | Subject: ${subject}`);
+
             const reviewKeywords = ['review', 'rate your', 'feedback', 'how was', 'share your experience'];
-            if (reviewKeywords.some(kw => headerText.includes(kw))) continue;
+            if (reviewKeywords.some(kw => headerText.includes(kw))) {
+                console.log(`[Sync_Skip] Filtered (Review/Feedback): ${uid}`);
+                continue;
+            }
 
             let platform: string | null = null;
             if (headerText.includes('playo')) platform = 'Playo';
@@ -121,7 +126,10 @@ export async function GET(req: Request) {
             }
 
             if (platform) {
+                console.log(`[Sync_Found] Candidate Platform: ${platform} for UID: ${uid}`);
                 candidates.push({ uid: item.attributes.uid, platform, subject, date: item.attributes.date });
+            } else {
+                console.log(`[Sync_Skip] No Platform Match for UID: ${uid}`);
             }
         }
 

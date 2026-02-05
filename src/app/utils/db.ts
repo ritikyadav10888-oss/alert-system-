@@ -90,11 +90,14 @@ export const saveBookings = async (bookings: any[]): Promise<void> => {
 
             // 🛡️ Quota Shield: Change Detection
             const existing = await getBookings();
-            const lastExistingId = existing[0]?.id;
-            const lastNewId = cappedBookings[0]?.id;
 
-            if (existing.length === cappedBookings.length && lastExistingId === lastNewId) {
-                console.log("[QUOTA_SHIELD] No new data. Skipping Redis write.");
+            // Check if ANY content has changed by comparing stringified versions of the first 5 items
+            // This is safer than just checking the latest ID and length
+            const existingSample = JSON.stringify(existing.slice(0, 5).map(i => ({ id: i.id, slot: i.bookingSlot })));
+            const newSample = JSON.stringify(cappedBookings.slice(0, 5).map(i => ({ id: i.id, slot: i.bookingSlot })));
+
+            if (existing.length === cappedBookings.length && existingSample === newSample) {
+                console.log("[QUOTA_SHIELD] Data identical. Skipping Redis write.");
                 return;
             }
 

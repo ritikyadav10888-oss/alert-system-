@@ -222,7 +222,13 @@ export async function GET(req: Request) {
                         return hasRange || hasDate;
                     }).join(' | ') || (finalizedSlots[0] || 'MISSING');
 
-                    const gameDate = extractDateOnly(bookingSlot);
+                    let gameDate = extractDateOnly(bookingSlot);
+                    // If date is STILL missing, search the body more aggressively
+                    if (!gameDate || gameDate === 'MISSING' || gameDate === '') {
+                        const dMatch = normalizedText.match(/(\d{1,2}\s+\w{3}\s+'\d{2})/i);
+                        if (dMatch) gameDate = dMatch[0];
+                    }
+
                     const gameTime = extractTimeOnly(bookingSlot);
 
                     let sport = '';

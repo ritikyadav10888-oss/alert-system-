@@ -5,62 +5,64 @@ import { isDev } from './db-config';
 
 const DB_FILE = isDev ? 'bookings_test.json' : 'bookings.json';
 const DB_PATH = path.join(process.cwd(), 'data', DB_FILE);
-const KV_KEY = isDev ? 'bookings_test' : 'bookings';
+const REDIS_KEY = isDev ? 'bookings_test' : 'bookings';
 
-// --- ioredis Client Initialization ---
-let redis: Redis | null = null;
-if (!isDev) {
-    const redisUrl = process.env.REDIS_URL || process.env.KV_URL;
-    if (redisUrl) {
-        redis = new Redis(redisUrl, {
-            tls: { rejectUnauthorized: false },
-            connectTimeout: 10000,
-        });
-        redis.on('error', (err) => console.error('[Redis_Error]', err));
-    }
-}
-
-// 🛡️ Quota Shield: In-Memory Cache (Server-Side)
-let historyCache: any[] | null = null;
+// --- QUOTA SHIELD: Server-side In-Memory Cache ---
+let memoryCache: any[] | null = null;
 let lastCacheUpdate = 0;
 const CACHE_TTL = 30000; // 30 seconds
+
+// Singleton Redis Client
+let redis: Redis | null = null;
+const getRedisClient = () => {
+    if (isDev) return null;
+    if (!redis) {
+        const url = process.env.REDIS_URL || process.env.KV_URL || '';
+        if (url) {
+            console.log(`[REDIS_READY] Initializing ioredis client (Masked: ${url.substring(0, 10)}...)`);
+            redis = new Redis(url, {
+                tls: { rejectUnauthorized: false },
+                maxRetriesPerRequest: 3
+            });
+        }
+    }
+    return redis;
+};
 
 export const getBookings = async (): Promise<any[]> => {
     if (isDev) {
         if (!fs.existsSync(DB_PATH)) return [];
         try {
             return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
-        } catch (e) {
-            return [];
-        }
+        } catch (e) { return []; }
     } else {
-        // Production: Use ioredis
+        // Production: ioredis with Quota Shield
         try {
-            // 🛡️ Quota Shield: Return cached data if fresh
-            if (historyCache && (Date.now() - lastCacheUpdate < CACHE_TTL)) {
-                return historyCache;
+            // 📊 Quota Shield: Return cache if fresh
+            if (memoryCache && (Date.now() - lastCacheUpdate < CACHE_TTL)) {
+                return memoryCache;
             }
 
-            if (!redis) throw new Error("Redis client not initialized");
+            const client = getRedisClient();
+            if (!client) return [];
 
-            const data = await redis.get(KV_KEY);
-            const history = data ? JSON.parse(data) : [];
+            const data = await client.get(REDIS_KEY);
+            const parsed = data ? JSON.parse(data) : [];
 
-            // Update Cache
-            historyCache = history;
+            // Update cache
+            memoryCache = parsed;
             lastCacheUpdate = Date.now();
 
-            console.log(`[REDIS_V1] Fetched ${history.length} records. (Reads saved by cache)`);
-            return history;
+            console.log(`[KV_PROD_V2] Fetched ${parsed.length} records from Redis`);
+            return parsed;
         } catch (e) {
-            console.error("[REDIS_V1] Fetch Error:", e);
-            return historyCache || []; // Fallback to stale cache if Redis fails
+            console.error("[KV_PROD_V2] Redis Fetch Error:", e);
+            return memoryCache || []; // Return stale if error
         }
     }
 };
 
 export const saveBookings = async (bookings: any[]): Promise<void> => {
-    // Safety: Only keep the latest 1000 items
     const cappedBookings = bookings.slice(0, 1000);
 
     if (isDev) {
@@ -69,27 +71,28 @@ export const saveBookings = async (bookings: any[]): Promise<void> => {
         }
         fs.writeFileSync(DB_PATH, JSON.stringify(cappedBookings, null, 2));
     } else {
-        // Production: Use ioredis
+        // Production: ioredis with Quota Shield
         try {
-            if (!redis) throw new Error("Redis client not initialized");
+            const client = getRedisClient();
+            if (!client) return;
 
             // 🛡️ Quota Shield: Change Detection
-            const current = await getBookings();
-            if (current.length === cappedBookings.length &&
-                JSON.stringify(current[0]?.id) === JSON.stringify(cappedBookings[0]?.id)) {
-                console.log("[REDIS_V1] Write Skipped: No changes detected. (Quota Saved! 🛡️)");
+            const existing = await getBookings();
+            const lastExistingId = existing[0]?.id;
+            const lastNewId = cappedBookings[0]?.id;
+
+            if (existing.length === cappedBookings.length && lastExistingId === lastNewId) {
+                console.log("[QUOTA_SHIELD] No new data. Skipping Redis write.");
                 return;
             }
 
-            await redis.set(KV_KEY, JSON.stringify(cappedBookings));
-
-            // Invalidate cache on write
-            historyCache = cappedBookings;
+            await client.set(REDIS_KEY, JSON.stringify(cappedBookings));
+            // Invalidate cache immediately on write
+            memoryCache = cappedBookings;
             lastCacheUpdate = Date.now();
-
-            console.log("[REDIS_V1] Data Updated Successfully.");
+            console.log("[QUOTA_SHIELD] Redis updated with new data.");
         } catch (e) {
-            console.error("[REDIS_V1] Save Error:", e);
+            console.error("Redis Save Error:", e);
         }
     }
 };
@@ -101,12 +104,13 @@ export const clearHistory = async (): Promise<void> => {
         }
     } else {
         try {
-            if (!redis) throw new Error("Redis client not initialized");
-            await redis.set(KV_KEY, JSON.stringify([]));
-            historyCache = [];
-            lastCacheUpdate = Date.now();
+            const client = getRedisClient();
+            if (client) {
+                await client.set(REDIS_KEY, JSON.stringify([]));
+                memoryCache = [];
+            }
         } catch (e) {
-            console.error("[REDIS_V1] Clear Error:", e);
+            console.error("Redis Clear Error:", e);
         }
     }
 };

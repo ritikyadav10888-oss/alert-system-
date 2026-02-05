@@ -9,19 +9,23 @@ interface LocationSubscription {
 
 // Memory fallback for development
 let memorySubscriptions: LocationSubscription[] = [];
-const KV_SUBS_KEY = isDev ? 'push_subscriptions_test' : 'push_subscriptions';
+const REDIS_SUBS_KEY = isDev ? 'push_subscriptions_test' : 'push_subscriptions';
 
-// --- Redis Client (Same instance as db.ts for performance) ---
+// Singleton Redis Client matching db.ts logic
 let redis: Redis | null = null;
-if (!isDev) {
-    const redisUrl = process.env.REDIS_URL || process.env.KV_URL;
-    if (redisUrl) {
-        redis = new Redis(redisUrl, {
-            tls: { rejectUnauthorized: false },
-            connectTimeout: 10000,
-        });
+const getRedisClient = () => {
+    if (isDev) return null;
+    if (!redis) {
+        const url = process.env.REDIS_URL || process.env.KV_URL || '';
+        if (url) {
+            redis = new Redis(url, {
+                tls: { rejectUnauthorized: false },
+                maxRetriesPerRequest: 3
+            });
+        }
     }
-}
+    return redis;
+};
 
 export const saveSubscription = async (location: string, subscription: any) => {
     const newSub: LocationSubscription = {
@@ -31,21 +35,20 @@ export const saveSubscription = async (location: string, subscription: any) => {
     };
 
     if (isDev) {
-        // Remove existing for this subscription if exists
         memorySubscriptions = memorySubscriptions.filter(s =>
             JSON.stringify(s.subscription) !== JSON.stringify(subscription)
         );
         memorySubscriptions.push(newSub);
     } else {
-        // Production: Save to Redis
         try {
-            if (!redis) throw new Error("Redis not initialized");
+            const client = getRedisClient();
+            if (!client) return;
             const current = await getSubscriptions();
             const filtered = current.filter(s =>
                 JSON.stringify(s.subscription) !== JSON.stringify(subscription)
             );
             filtered.push(newSub);
-            await redis.set(KV_SUBS_KEY, JSON.stringify(filtered));
+            await client.set(REDIS_SUBS_KEY, JSON.stringify(filtered));
         } catch (e) {
             console.error('Redis Subscription Save Error:', e);
         }
@@ -57,8 +60,9 @@ export const getSubscriptions = async (): Promise<LocationSubscription[]> => {
         return memorySubscriptions;
     } else {
         try {
-            if (!redis) throw new Error("Redis not initialized");
-            const data = await redis.get(KV_SUBS_KEY);
+            const client = getRedisClient();
+            if (!client) return [];
+            const data = await client.get(REDIS_SUBS_KEY);
             return data ? JSON.parse(data) : [];
         } catch (e) {
             console.error('Redis Subscription Fetch Error:', e);

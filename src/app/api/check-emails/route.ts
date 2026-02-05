@@ -154,37 +154,41 @@ export async function GET(req: Request) {
 
                     let rawSlots: string[] = [];
                     const lines = normalizedText.split('\n');
-                    const keywords = ['slot', 'booking date', 'match date', 'start time', 'booking time', 'venue', 'purchase', 'event date', 'match time', 'transaction', 'invoice', 'date of play', 'booking details', 'booked for'];
-                    const datePattern = /(\d{1,2}\s+\w{3},\s*\d{4})|(\w{3},?\s+\d{1,2},?\s*\d{4})|(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})|(?:Tomorrow|Today)|(\w{4,9},?\s+\d{1,2} \w{3})/i;
+                    const keywords = ['slot', 'booking date', 'match date', 'start time', 'booking time', 'venue', 'purchase', 'event date', 'match time', 'transaction', 'invoice', 'date of play', 'booking details', 'booked for', 'slot details'];
+                    const datePattern = /(\d{1,2}\s+\w{3},\s*\d{4})|(\w{3},?\s+\d{1,2},?\s*\d{4})|(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})|(?:Tomorrow|Today)|(\w{4,9},?\s+\d{1,2} \w{3})|(\d{1,2}\s+\w{3}\s+'\d{2})/i;
                     const timePattern = /(\d{1,2}:\d{2}\s*(?:AM|PM))/i;
 
                     for (const kw of keywords) {
                         const idx = lines.findIndex(l => l.toLowerCase().includes(kw));
                         if (idx !== -1) {
-                            for (let i = Math.max(0, idx); i < idx + 15; i++) {
+                            let lastFoundDate = "";
+                            for (let i = Math.max(0, idx); i < idx + 20; i++) {
                                 const line = lines[i]?.trim();
                                 if (!line || line.includes('__:')) continue;
+
                                 const dMatch = line.match(datePattern);
                                 const tMatch = line.match(timePattern);
-                                if (dMatch && tMatch) { rawSlots.push(line); }
-                                else if (dMatch || tMatch) {
-                                    let d = dMatch ? dMatch[0] : "";
-                                    let t = tMatch ? tMatch[0] : "";
-                                    if (d && !t) {
-                                        for (let k = i + 1; k < i + 4; k++) {
-                                            const sub = lines[k]?.trim();
-                                            const st = sub?.match(timePattern);
-                                            if (st) { t = st[0]; break; }
-                                        }
-                                    }
-                                    if (t && !d) {
-                                        for (let k = i - 4; k < i; k++) {
+
+                                if (dMatch) lastFoundDate = dMatch[0];
+
+                                if (dMatch && tMatch) {
+                                    rawSlots.push(line);
+                                }
+                                else if (tMatch) {
+                                    if (lastFoundDate) {
+                                        rawSlots.push(`${lastFoundDate}, ${tMatch[0]}`);
+                                    } else {
+                                        // Look back for date if not found yet
+                                        for (let k = i - 5; k < i; k++) {
                                             const sub = lines[k]?.trim();
                                             const sd = sub?.match(datePattern);
-                                            if (sd) { d = sd[0]; break; }
+                                            if (sd) {
+                                                lastFoundDate = sd[0];
+                                                rawSlots.push(`${lastFoundDate}, ${tMatch[0]}`);
+                                                break;
+                                            }
                                         }
                                     }
-                                    if (d && t) rawSlots.push(`${d}, ${t}`);
                                 }
                             }
                         }

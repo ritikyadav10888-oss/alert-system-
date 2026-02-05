@@ -12,9 +12,14 @@ const initWebPush = () => {
     }
 
     try {
-        // VAPID keys must be URL-safe Base64 without padding (=)
-        const cleanPublicKey = publicKey.replace(/=+$/, '');
-        webpush.setVapidDetails(subject, cleanPublicKey, privateKey);
+        // Aggressive Cleaning: Trim, remove quotes, and strip padding
+        const cleanPublicKey = publicKey.trim().replace(/^["']|["']$/g, '').replace(/=+$/, '');
+        const cleanPrivateKey = privateKey.trim().replace(/^["']|["']$/g, '');
+
+        const maskedPub = cleanPublicKey.substring(0, 10) + '...' + cleanPublicKey.substring(cleanPublicKey.length - 5);
+        console.log(`[Push_V1] Standardizing VAPID Key: ${maskedPub}`);
+
+        webpush.setVapidDetails(subject, cleanPublicKey, cleanPrivateKey);
         return true;
     } catch (e) {
         console.error('Error setting VAPID details:', e);

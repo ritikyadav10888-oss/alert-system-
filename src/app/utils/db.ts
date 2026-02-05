@@ -18,6 +18,10 @@ export const getBookings = async (): Promise<any[]> => {
     } else {
         // Production: Use Vercel KV
         try {
+            const kvUrl = process.env.KV_REST_API_URL || 'MISSING';
+            const maskedUrl = kvUrl.substring(0, 8) + '...' + kvUrl.substring(kvUrl.length - 4);
+            console.log(`[KV_PROD_V1] Connecting to KV: ${maskedUrl}`);
+
             const data = await kv.get<any[]>(KV_KEY);
             if (data) console.log(`[KV_PROD_V1] Fetched ${data.length} records from KV`);
             return data || [];

@@ -1,18 +1,28 @@
 import webpush from 'web-push';
 import { getSubscriptions } from './subscriptions';
 
-const vapidKeys = {
-    publicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '',
-    privateKey: process.env.VAPID_PRIVATE_KEY || ''
+const initWebPush = () => {
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const privateKey = process.env.VAPID_PRIVATE_KEY;
+    const subject = process.env.VAPID_SUBJECT || 'mailto:if1905630373@gmail.com';
+
+    if (!publicKey || !privateKey) {
+        console.warn('Push Notification Keys missing. Skipping push initialization.');
+        return false;
+    }
+
+    try {
+        webpush.setVapidDetails(subject, publicKey, privateKey);
+        return true;
+    } catch (e) {
+        console.error('Error setting VAPID details:', e);
+        return false;
+    }
 };
 
-webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT || 'mailto:alert-system@example.com',
-    vapidKeys.publicKey,
-    vapidKeys.privateKey
-);
-
 export const sendPushNotification = async (location: string, payload: { title: string, body: string, url?: string }) => {
+    if (!initWebPush()) return;
+
     const subscriptions = getSubscriptions();
 
     // Filter by location (Targeted) or include all if location is missing/generic (Broadcast)

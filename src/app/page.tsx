@@ -341,263 +341,215 @@ export default function Home() {
         });
     };
 
+    const getPlatformColor = (platform: string) => {
+        switch (platform) {
+            case 'Playo': return { bg: '#dcfce7', text: '#15803d' };
+            case 'Hudle': return { bg: '#e0f2fe', text: '#0369a1' };
+            case 'Khelomore': return { bg: '#fee2e2', text: '#b91c1c' };
+            case 'System': return { bg: '#f3e8ff', text: '#7e22ce' };
+            default: return { bg: '#f1f5f9', text: '#475569' };
+        }
+    };
+
     return (
         <main className={styles.main}>
             <div className={styles.dashboard}>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginBottom: '2rem' }}>
-                    <h1 className={styles.title} style={{ margin: 0 }}>Turf Alert Dashboard</h1>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                    <h1 className={styles.title}>Turf Alert Dashboard</h1>
                     <span style={{
-                        padding: '4px 12px',
-                        borderRadius: '20px',
+                        padding: '6px 16px',
+                        borderRadius: '9999px',
                         fontSize: '0.75rem',
-                        fontWeight: 'bold',
+                        fontWeight: '800',
                         background: isTest ? '#fef3c7' : '#dcfce7',
                         color: isTest ? '#92400e' : '#166534',
                         border: `1px solid ${isTest ? '#f59e0b' : '#22c55e'}`,
                         textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
+                        letterSpacing: '0.05em'
                     }}>
                         {isTest ? '🧪 Test Mode' : '🚀 Production'}
                     </span>
                 </div>
 
-                <div className={styles.divider}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', width: '100%', justifyContent: 'space-between' }}>
-                        <span>📜 Booking History</span>
-
-                        {isLiveSync && (
-                            <div style={{ padding: '12px', background: '#e3f2fd', borderRadius: '12px', border: '1px solid #bbdefb', fontSize: '0.95rem', textAlign: 'center', color: '#0d47a1', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                                <span className={styles.syncPulse}></span>
-                                <div style={{ textAlign: 'left' }}>
-                                    <strong>Status:</strong> {syncStatus}
-                                    {lastSyncTime && (
-                                        <div style={{ fontSize: '0.7rem', opacity: 0.8 }}>
-                                            Last Check: {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '0.8rem', background: '#eee', padding: '2px 8px', borderRadius: '10px' }}>
-                                Total: {sortedHistory.length}
-                            </span>
-                            <button
-                                onClick={handleDeepSync}
-                                style={{
-                                    fontSize: '0.75rem',
-                                    background: '#e2e8f0',
-                                    color: '#475569',
-                                    border: '1px solid #cbd5e1',
-                                    padding: '2px 8px',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    fontWeight: '600'
-                                }}
-                                title="Sync all historical data from last 3 months"
-                            >
-                                🚀 Sync All History
-                            </button>
-                            <button
-                                onClick={handleClearHistory}
-                                style={{
-                                    fontSize: '0.75rem',
-                                    background: '#fee2e2',
-                                    color: '#b91c1c',
-                                    border: '1px solid #fecaca',
-                                    padding: '2px 8px',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    fontWeight: '600'
-                                }}
-                                title="Delete all local history and start fresh"
-                            >
-                                🗑️ Clear History
-                            </button>
+                <div className={styles.statsHeader}>
+                    {/* Stats Card: Total Bookings */}
+                    <div className={styles.statsCard}>
+                        <div style={{ fontSize: '2rem' }}>📜</div>
+                        <div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>TOTAL BOOKINGS</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b' }}>{sortedHistory.length}</div>
                         </div>
                     </div>
-                </div>
-                <div style={{
-                    marginBottom: '2rem',
-                    padding: '1.5rem',
-                    background: '#f8fafc',
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '15px'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '1.2rem' }}>📲</span>
-                        <h3 style={{ margin: 0, color: '#1e293b' }}>Mobile Push Alerts (WhatsApp Style)</h3>
-                    </div>
-                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
-                        Get instant notifications on your phone even when the dashboard is closed.
-                        <b> Select your site below</b> to receive targeted alerts.
-                    </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-                        <select
-                            value={selectedLocation}
-                            onChange={(e) => setSelectedLocation(e.target.value)}
-                            className={styles.locationSelect}
-                            style={{ flex: 1, minWidth: '200px' }}
-                        >
-                            {locations.map(loc => (loc !== 'Unknown' && <option key={loc} value={loc}>{loc}</option>))}
-                            <option value="General">📢 All Locations (Admin)</option>
-                        </select>
+
+                    {/* Stats Card: Sync Status */}
+                    {isLiveSync && (
+                        <div className={styles.statsCard} style={{ minWidth: '250px' }}>
+                            <div className={styles.syncPulse}></div>
+                            <div>
+                                <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>SYNC STATUS</div>
+                                <div style={{ fontWeight: 600, color: '#0f172a' }}>{syncStatus}</div>
+                                {lastSyncTime && (
+                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                        Last: {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', gap: '10px' }}>
                         <button
-                            onClick={subscribeToPush}
-                            disabled={isPushSubmitting || pushStatus === 'enabled'}
+                            onClick={handleDeepSync}
                             style={{
-                                padding: '10px 20px',
-                                background: pushStatus === 'enabled' ? '#22c55e' : '#2563eb',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                fontWeight: 'bold',
+                                background: 'white',
+                                color: '#475569',
+                                border: '1px solid #cbd5e1',
+                                padding: '10px 16px',
+                                borderRadius: '10px',
                                 cursor: 'pointer',
+                                fontWeight: '600',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px',
-                                opacity: isPushSubmitting ? 0.7 : 1
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                             }}
                         >
-                            {isPushSubmitting ? '⌛ Enabling...' : pushStatus === 'enabled' ? '✅ Alerts Active' : '🔔 Enable Push Alerts'}
+                            🚀 Sync All
+                        </button>
+                        <button
+                            onClick={handleClearHistory}
+                            style={{
+                                background: '#fee2e2',
+                                color: '#b91c1c',
+                                border: '1px solid #fecaca',
+                                padding: '10px 16px',
+                                borderRadius: '10px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            🗑️ Clear
                         </button>
                     </div>
                 </div>
 
+                {/* Mobile View: Card List */}
+                <div className={styles.mobileCardContainer}>
+                    {!isHistoryLoaded ? (
+                        [1, 2, 3].map(i => (
+                            <div key={`skel-mob-${i}`} className={styles.mobileCard}>
+                                <div className={styles.skeletonLine} style={{ width: '60%' }}></div>
+                                <div className={styles.skeletonLine} style={{ width: '80%' }}></div>
+                                <div className={styles.skeletonLine} style={{ width: '40%' }}></div>
+                            </div>
+                        ))
+                    ) : sortedHistory.map((item) => {
+                        const pStyle = getPlatformColor(item.platform);
+                        return (
+                            <div key={item.id} className={styles.mobileCard}>
+                                <div className={styles.cardHeader}>
+                                    <span className={styles.platformBadge} style={{ background: pStyle.bg, color: pStyle.text }}>
+                                        {item.platform}
+                                    </span>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>{formatGameDate(item.gameDate || "")}</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.gameTime || item.bookingSlot}</div>
+                                    </div>
+                                </div>
+                                <div className={styles.cardBody}>
+                                    <div className={styles.cardRow}>
+                                        <span className={styles.customer} style={{ fontSize: '1.1rem' }}>{item.customerName || 'Unknown User'}</span>
+                                        <span className={styles.amount} style={{ fontSize: '1.1rem' }}>{item.amount ? `₹${item.amount}` : '-'}</span>
+                                    </div>
+                                    <div className={styles.cardRow}>
+                                        <div className={styles.location}>
+                                            <span>📍</span> {item.location}
+                                        </div>
+                                        <span className={styles.sportBadge}>{item.sport || 'General'}</span>
+                                    </div>
+                                </div>
+                                <div className={styles.cardFooter}>
+                                    <span className={styles.notifiedBadge}>👤 {getManagerForLocation(item.location).name}</span>
+                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                        {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Desktop View: Table */}
                 <div className={styles.tableContainer}>
                     <table className={styles.bookingTable}>
-                        <thead style={{ background: '#f1f5f9', position: 'sticky', top: 0, zIndex: 10, borderBottom: '2px solid #e2e8f0' }}>
+                        <thead>
                             <tr>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '100px', color: '#475569', fontWeight: '700' }}>📧 Received</th>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '100px', color: '#475569', fontWeight: '700' }}>📅 Game Date</th>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '130px', color: '#475569', fontWeight: '700' }}>⏰ Game Time</th>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '90px', color: '#475569', fontWeight: '700' }}>Platform</th>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '90px', color: '#475569', fontWeight: '700' }}>Sport</th>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '120px', color: '#475569', fontWeight: '700' }}>📍 Location</th>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '130px', color: '#475569', fontWeight: '700' }}>👤 Notified</th>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '120px', color: '#475569', fontWeight: '700' }}>Custome</th>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '80px', color: '#475569', fontWeight: '700' }}>Amount</th>
-                                <th style={{ padding: '15px 10px', textAlign: 'left', color: '#475569', fontWeight: '700' }}>Details</th>
+                                <th>Platform</th>
+                                <th>Game Date</th>
+                                <th>Game Time</th>
+                                <th>Sport</th>
+                                <th>Location</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Notified</th>
+                                <th>Received</th>
                             </tr>
                         </thead>
                         <tbody>
                             {!isHistoryLoaded ? (
-                                // ⚡ LOADING SKELETON ROWS ⚡
                                 [1, 2, 3, 4, 5].map(i => (
-                                    <tr key={`skeleton-${i}`} className={styles.skeletonRow}>
-                                        <td colSpan={10} style={{ padding: '15px 10px' }}>
-                                            <div className={styles.skeletonLine}></div>
-                                        </td>
+                                    <tr key={`skeleton-${i}`}>
+                                        <td colSpan={9}><div className={styles.skeletonLine}></div></td>
                                     </tr>
                                 ))
                             ) : sortedHistory.length === 0 ? (
                                 <tr>
-                                    <td colSpan={10} style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
-                                        📭 No bookings yet.
+                                    <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                                        📭 No bookings found.
                                     </td>
                                 </tr>
                             ) : (
-                                sortedHistory.map((item: any) => (
-                                    <tr key={item.id} style={{ borderBottom: '1px solid #f0f0f0', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#fafafa'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                                        <td style={{ padding: '12px 10px' }} title={item.timestamp.toLocaleString()}>
-                                            <div className={styles.receivedTime} style={{ fontWeight: '700', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                {item.timestamp.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                                                {Date.now() - item.timestamp.getTime() < 120000 && (
-                                                    <span style={{
-                                                        fontSize: '0.65rem',
-                                                        background: '#4ade80',
-                                                        color: '#fff',
-                                                        padding: '1px 5px',
-                                                        borderRadius: '10px',
-                                                        animation: 'pulse 1.5s infinite',
-                                                        fontWeight: 'bold'
-                                                    }}>NEW</span>
-                                                )}
-                                            </div>
-                                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                sortedHistory.map((item: any) => {
+                                    const pStyle = getPlatformColor(item.platform);
+                                    return (
+                                        <tr key={item.id}>
+                                            <td>
+                                                <span className={styles.platformBadge} style={{ background: pStyle.bg, color: pStyle.text }}>
+                                                    {item.platform}
+                                                </span>
+                                            </td>
+                                            <td style={{ fontWeight: 700, color: '#0f172a' }}>{formatGameDate(item.gameDate)}</td>
+                                            <td style={{ fontWeight: 600, color: '#334155' }}>{item.gameTime || item.bookingSlot || '-'}</td>
+                                            <td><span className={styles.sportBadge}>{item.sport || 'General'}</span></td>
+                                            <td><div className={styles.location}>{item.location}</div></td>
+                                            <td className={styles.customer}>{item.customerName || '-'}</td>
+                                            <td className={styles.amount}>{item.amount ? `₹${item.amount}` : '-'}</td>
+                                            <td><span className={styles.notifiedBadge}>{getManagerForLocation(item.location).name}</span></td>
+                                            <td style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                                {item.timestamp.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}<br />
                                                 {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '12px 10px' }}>
-                                            <div style={{ fontWeight: '700', color: '#0369a1' }}>
-                                                {formatGameDate(item.gameDate)}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '12px 10px' }}>
-                                            <div className={styles.gameTime}>{item.gameTime || item.bookingSlot || '-'}</div>
-                                        </td>
-                                        <td style={{ padding: '12px 10px' }}>
-                                            <span
-                                                className={styles.platformTag}
-                                                style={{
-                                                    background: item.platform === 'Playo' ? '#E8F5E9' :
-                                                        item.platform === 'Hudle' ? '#E1F5FE' :
-                                                            item.platform === 'Khelomore' ? '#FBE9E7' :
-                                                                item.platform === 'System' ? '#F3E5F5' : '#ECEFF1',
-                                                    color: item.platform === 'Playo' ? '#2E7D32' :
-                                                        item.platform === 'Hudle' ? '#0277BD' :
-                                                            item.platform === 'Khelomore' ? '#D84315' :
-                                                                item.platform === 'System' ? '#6A1B9A' : '#37474F'
-                                                }}
-                                            >
-                                                {item.platform}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '12px 10px' }}>
-                                            <span
-                                                className={styles.sportBadge}
-                                                style={{
-                                                    background: item.sport === 'Badminton' ? '#FFF3E0' : item.sport === 'Cricket' ? '#F3E5F5' : '#F5F5F5',
-                                                    color: item.sport === 'Badminton' ? '#E65100' : item.sport === 'Cricket' ? '#7B1FA2' : '#616161'
-                                                }}
-                                            >
-                                                {item.sport || 'General'}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '12px 10px' }}>
-                                            <div className={styles.locationText}>{item.location}</div>
-                                        </td>
-                                        <td style={{ padding: '12px 10px' }}>
-                                            <span style={{
-                                                fontSize: '0.8rem',
-                                                color: '#0d47a1',
-                                                background: '#e3f2fd',
-                                                padding: '2px 8px',
-                                                borderRadius: '4px',
-                                                fontWeight: '600'
-                                            }}>
-                                                {getManagerForLocation(item.location).name}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '12px 10px', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>
-                                            {item.customerName || '-'}
-                                        </td>
-                                        <td style={{ padding: '12px 10px', fontSize: '0.85rem', fontWeight: '600', color: '#16a34a' }}>
-                                            {item.amount ? `₹${item.amount}` : '-'}
-                                        </td>
-                                        <td style={{ padding: '12px 10px', color: '#666', fontSize: '0.8rem' }}>
-                                            {item.message.length > 50 ? item.message.substring(0, 50) + '...' : item.message}
-                                        </td>
-                                    </tr>
-                                ))
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
                 </div>
 
-                <div className={styles.info}>
-                    <p>Simulating user on Mobile (Turf Manager)</p>
-                    <p><strong>Sound Active:</strong> Alerts will play a notification sound.</p>
+                <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8' }}>
+                    <p>Simulating user on Mobile (Turf Manager) • Sound Active</p>
                 </div>
             </div>
 
             <div className={styles.alertContainer}>
                 {alerts.map((alert, index) => (
-                    <div key={alert.id} style={{ marginTop: index * 10 }}> {/* Stack effect */}
+                    <div key={alert.id} style={{ marginTop: index * 10 }}>
                         <AlertPopup {...alert} />
                     </div>
                 ))}

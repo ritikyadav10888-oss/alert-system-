@@ -1,351 +1,292 @@
 .main {
     min-height: 100vh;
-    padding: 1rem;
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: #f8fafc;
-    font-family: 'Inter', sans-serif;
+    background: #f1f5f9;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #1e293b;
 }
 
 .dashboard {
     background: white;
     padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
 .title {
-    font-size: 1.8rem;
-    margin-bottom: 2rem;
-    text-align: center;
-    color: #333;
-}
-
-.emailSection {
-    background: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid #e9ecef;
-    margin-bottom: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    transition: box-shadow 0.3s;
-}
-
-.emailSection:focus-within {
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-}
-
-.sectionHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.emailSection h2 {
-    font-size: 1.1rem;
-    color: #495057;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.025em;
     margin: 0;
 }
 
-.monitorBtn {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    border-radius: 20px;
-    border: 1px solid #28a745;
+/* Stats Header */
+.statsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.statsCard {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.syncPulse {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: beacon 1.5s infinite;
+}
+
+@keyframes beacon {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Table Styles (Desktop) */
+.tableContainer {
+    overflow-x: auto;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     background: white;
-    color: #28a745;
-    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    max-height: calc(100vh - 300px);
+}
+
+.bookingTable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: left;
+}
+
+.bookingTable th {
+    background: #f8fafc;
+    padding: 16px;
     font-weight: 600;
-}
-
-.monitorBtn.active {
-    background: #dc3545;
-    color: white;
-    border-color: #dc3545;
-    animation: pulse 2s infinite;
-}
-
-.emailInput {
-    padding: 12px;
-    border: 1px solid #ced4da;
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 0.95rem;
-    resize: vertical;
-}
-
-.processBtn {
-    padding: 12px;
-    background-color: #333;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.processBtn:hover {
-    background-color: #000;
-}
-
-.scanningText {
-    font-size: 0.85rem;
-    color: #666;
-    text-align: center;
-    font-style: italic;
-    animation: fade 1.5s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
-    }
-
-    70% {
-        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
-    }
-}
-
-@keyframes fade {
-
-    0%,
-    100% {
-        opacity: 0.5;
-    }
-
-    50% {
-        opacity: 1;
-    }
-}
-
-.divider {
-    text-align: center;
-    color: #adb5bd;
-    font-size: 0.85rem;
-    font-weight: 600;
+    color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin: 0 0 1.5rem 0;
-    position: relative;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.controls {
+.bookingTable td {
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9rem;
+    color: #334155;
+    vertical-align: middle;
+}
+
+.bookingTable tr:last-child td {
+    border-bottom: none;
+}
+
+.bookingTable tr:hover {
+    background: #f8fafc;
+}
+
+/* Badges & Tags */
+.platformBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+.sportBadge {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.amount {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-weight: 700;
+    color: #059669;
+    font-size: 0.95rem;
+}
+
+.customer {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.location {
+    font-weight: 500;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Mobile Card View */
+.mobileCardContainer {
+    display: none; /* Hidden on desktop */
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mobileCard {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
-.controlGroup {
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 0.75rem;
+}
+
+.cardBody {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.controlGroup label {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #555;
-}
-
-.select {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    font-size: 1rem;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.select:focus {
-    border-color: #0070f3;
-}
-
-.buttonGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.btn {
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.1s, opacity 0.2s;
-}
-
-.btn:active {
-    transform: scale(0.98);
-}
-
-.btnPlayo {
-    background-color: #7CB342;
-}
-
-.btnHudle {
-    background-color: #009CE3;
-}
-
-.btnDistrict {
-    background-color: #2c3e50;
-}
-
-.btnKhelomore {
-    background-color: #ee5253;
-}
-
-.info {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #eee;
-    text-align: center;
-    color: #777;
-    font-size: 0.9rem;
-}
-
-.alertContainer {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    /* Let clicks pass through empty space */
+.cardRow {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    padding-top: 20px;
-    width: 320px;
-    /* Constraints width for stacking */
+    justify-content: space-between;
+    align-items: baseline;
 }
 
-/* Visibility Enhancements */
-.sportBadge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 700;
+.cardLabel {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 600;
     text-transform: uppercase;
-    background: #f0f2f5;
-    color: #4b5563;
 }
 
-.platformTag {
-    font-weight: 800;
-    font-size: 0.85rem;
+.cardValue {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+    text-align: right;
+}
+
+.cardFooter {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notifiedBadge {
+    font-size: 0.75rem;
+    background: #e0f2fe;
+    color: #0284c7;
     padding: 2px 8px;
     border-radius: 4px;
-}
-
-.gameTime {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #111827;
-}
-
-.receivedTime {
-    font-size: 0.8rem;
-    color: #6b7280;
-}
-
-.locationText {
     font-weight: 600;
-    color: #374151;
 }
 
-.syncPulse {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background: #10b981;
-    border-radius: 50%;
-    margin-right: 8px;
-    animation: beacon 1.5s infinite;
-}
-
-@keyframes beacon {
-    0% {
-        transform: scale(0.8);
-        opacity: 1;
-    }
-
-    100% {
-        transform: scale(2.5);
-        opacity: 0;
-    }
-}
-
+/* Media Queries */
 @media (max-width: 768px) {
     .main {
-        padding: 0.5rem;
+        padding: 0;
+        background: #f8fafc;
     }
 
     .dashboard {
-        padding: 1.25rem 0.75rem;
-        border-radius: 12px;
+        padding: 1rem;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
     }
 
     .title {
         font-size: 1.5rem;
-        margin-bottom: 1.5rem;
+        text-align: left;
     }
 
-    .emailSection {
-        padding: 1rem;
-    }
-
-    .buttonGrid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-
-    .alertContainer {
-        width: 100%;
-        padding: 10px;
-    }
-
+    /* Hide Table on Mobile */
     .tableContainer {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        margin: 0 -0.5rem;
-        padding: 0 0.5rem;
+        display: none;
     }
 
-    .bookingTable {
-        min-width: 800px;
-        /* Force scroll for all columns */
+    /* Show Cards on Mobile */
+    .mobileCardContainer {
+        display: flex;
     }
 
-    .receivedTime,
-    .gameTime {
-        font-size: 0.85rem;
+    .statsHeader {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
 
-.tableContainer {
-    max-height: calc(100vh - 280px);
-    overflow-y: auto;
-    border: 1px solid #eaeaea;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    background: white;
-    width: 100%;
+/* Animation */
+.newBadge {
+    animation: pulse-green 2s infinite;
 }
 
-.bookingTable {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+.skeletonLine {
+    height: 12px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    animation: shimmer 1.5s infinite linear;
+    background: linear-gradient(to right, #f1f5f9 4%, #e2e8f0 25%, #f1f5f9 36%);
+    background-size: 1000px 100%;
+}
+
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+
+/* Alert Container */
+.alertContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }

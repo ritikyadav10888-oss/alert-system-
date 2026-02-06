@@ -3,8 +3,8 @@ const withPWA = require("next-pwa")({
     dest: "public",
     register: true,
     skipWaiting: true,
-    disable: process.env.NODE_ENV === "development",
-    sw: "sw-prod.js", // Use a fresh name to bypass potentially stale/corrupt browser cache
+    disable: false, // Enable PWA in all environments for device installation
+    sw: "sw.js",
     buildExcludes: [
         /middleware-manifest\.json$/,
         /app-build-manifest\.json$/,
@@ -12,6 +12,18 @@ const withPWA = require("next-pwa")({
         /_next\/static\/.*manifest\.json$/,
         /_next\/static\/.*build-manifest\.json$/,
         /.*\.map$/
+    ],
+    runtimeCaching: [
+        {
+            urlPattern: /^https?.*/,
+            handler: 'NetworkFirst',
+            options: {
+                cacheName: 'offlineCache',
+                expiration: {
+                    maxEntries: 200,
+                },
+            },
+        },
     ],
 });
 

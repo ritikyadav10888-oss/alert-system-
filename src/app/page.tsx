@@ -14,6 +14,8 @@ interface AlertItem extends AlertProps {
     gameTime?: string;
     sport?: string;
     managerName?: string;
+    bookingName?: string;
+    paidAmount?: string;
 }
 
 export default function Home() {
@@ -209,7 +211,9 @@ export default function Home() {
                             alertDate,
                             a.id,
                             a.gameDate,
-                            a.gameTime
+                            a.gameTime,
+                            a.bookingName || "N/A",
+                            a.paidAmount || "N/A"
                         );
                     });
                 } else {
@@ -275,7 +279,9 @@ export default function Home() {
         timestamp?: Date,
         alertId: string = Math.random().toString(),
         gameDate: string = "",
-        gameTime: string = ""
+        gameTime: string = "",
+        bookingName: string = "N/A",
+        paidAmount: string = "N/A"
     ) => {
         // 1. Session Duplicate Check: If we already popped this in the current session, skip.
         if (notifiedSessionIds.current.has(alertId)) return;
@@ -297,7 +303,9 @@ export default function Home() {
             gameDate: gameDate || "",
             gameTime: gameTime || "",
             sport: sport || "General",
-            managerName: isSystemBroadcast ? 'ALL MANAGERS' : manager.name
+            managerName: isSystemBroadcast ? 'ALL MANAGERS' : manager.name,
+            bookingName: bookingName,
+            paidAmount: paidAmount
         };
 
         // Mark as notified so we don't repeat
@@ -360,16 +368,16 @@ export default function Home() {
                 </div>
 
                 <div className={styles.divider}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', width: '100%', justifyContent: 'space-between' }}>
-                        <span>📜 Booking History</span>
+                    <div className={styles.historyHeader} style={{ display: 'flex', alignItems: 'center', gap: '15px', width: '100%', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 800, fontSize: '1.1rem' }}>📜 Booking History</span>
 
                         {isLiveSync && (
-                            <div style={{ padding: '12px', background: '#e3f2fd', borderRadius: '12px', border: '1px solid #bbdefb', fontSize: '0.95rem', textAlign: 'center', color: '#0d47a1', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                            <div className={styles.syncStatus} style={{ padding: '10px 15px', background: '#e3f2fd', borderRadius: '12px', border: '1px solid #bbdefb', fontSize: '0.85rem', textAlign: 'center', color: '#0d47a1', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
                                 <span className={styles.syncPulse}></span>
                                 <div style={{ textAlign: 'left' }}>
                                     <strong>Status:</strong> {syncStatus}
                                     {lastSyncTime && (
-                                        <div style={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                                        <div style={{ fontSize: '0.65rem', opacity: 0.8 }}>
                                             Last Check: {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                         </div>
                                     )}
@@ -377,94 +385,46 @@ export default function Home() {
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '0.8rem', background: '#eee', padding: '2px 8px', borderRadius: '10px' }}>
-                                Total: {sortedHistory.length}
+                        <div className={styles.historyControls} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.75rem', background: '#f1f5f9', padding: '4px 10px', borderRadius: '20px', color: '#64748b', fontWeight: 'bold' }}>
+                                Records: {sortedHistory.length}
                             </span>
                             <button
                                 onClick={handleDeepSync}
                                 style={{
-                                    fontSize: '0.75rem',
-                                    background: '#e2e8f0',
-                                    color: '#475569',
-                                    border: '1px solid #cbd5e1',
-                                    padding: '2px 8px',
-                                    borderRadius: '6px',
+                                    fontSize: '0.7rem',
+                                    background: '#334155',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
                                     cursor: 'pointer',
                                     fontWeight: '600'
                                 }}
-                                title="Sync all historical data from last 3 months"
+                                title="Sync all historical data from last 4 months"
                             >
-                                🚀 Sync All History
+                                🚀 Sync All
                             </button>
                             <button
                                 onClick={handleClearHistory}
                                 style={{
-                                    fontSize: '0.75rem',
+                                    fontSize: '0.7rem',
                                     background: '#fee2e2',
                                     color: '#b91c1c',
                                     border: '1px solid #fecaca',
-                                    padding: '2px 8px',
-                                    borderRadius: '6px',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
                                     cursor: 'pointer',
                                     fontWeight: '600'
                                 }}
-                                title="Delete all local history and start fresh"
+                                title="Clear history"
                             >
-                                🗑️ Clear History
+                                🗑️ Clear
                             </button>
                         </div>
                     </div>
                 </div>
-                <div style={{
-                    marginBottom: '2rem',
-                    padding: '1.5rem',
-                    background: '#f8fafc',
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '15px'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '1.2rem' }}>📲</span>
-                        <h3 style={{ margin: 0, color: '#1e293b' }}>Mobile Push Alerts (WhatsApp Style)</h3>
-                    </div>
-                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
-                        Get instant notifications on your phone even when the dashboard is closed.
-                        <b> Select your site below</b> to receive targeted alerts.
-                    </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-                        <select
-                            value={selectedLocation}
-                            onChange={(e) => setSelectedLocation(e.target.value)}
-                            className={styles.locationSelect}
-                            style={{ flex: 1, minWidth: '200px' }}
-                        >
-                            {locations.map(loc => (loc !== 'Unknown' && <option key={loc} value={loc}>{loc}</option>))}
-                            <option value="General">📢 All Locations (Admin)</option>
-                        </select>
-                        <button
-                            onClick={subscribeToPush}
-                            disabled={isPushSubmitting || pushStatus === 'enabled'}
-                            style={{
-                                padding: '10px 20px',
-                                background: pushStatus === 'enabled' ? '#22c55e' : '#2563eb',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                opacity: isPushSubmitting ? 0.7 : 1
-                            }}
-                        >
-                            {isPushSubmitting ? '⌛ Enabling...' : pushStatus === 'enabled' ? '✅ Alerts Active' : '🔔 Enable Push Alerts'}
-                        </button>
-                    </div>
-                </div>
+
 
                 <div className={styles.tableContainer}>
                     <table className={styles.bookingTable}>
@@ -475,6 +435,8 @@ export default function Home() {
                                 <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '130px', color: '#475569', fontWeight: '700' }}>⏰ Game Time</th>
                                 <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '90px', color: '#475569', fontWeight: '700' }}>Platform</th>
                                 <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '90px', color: '#475569', fontWeight: '700' }}>Sport</th>
+                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '120px', color: '#475569', fontWeight: '700' }}>👤 Customer</th>
+                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '100px', color: '#475569', fontWeight: '700' }}>💰 Amount</th>
                                 <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '120px', color: '#475569', fontWeight: '700' }}>📍 Location</th>
                                 <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '130px', color: '#475569', fontWeight: '700' }}>👤 Notified</th>
                                 <th style={{ padding: '15px 10px', textAlign: 'left', color: '#475569', fontWeight: '700' }}>Details</th>
@@ -485,21 +447,21 @@ export default function Home() {
                                 // ⚡ LOADING SKELETON ROWS ⚡
                                 [1, 2, 3, 4, 5].map(i => (
                                     <tr key={`skeleton-${i}`} className={styles.skeletonRow}>
-                                        <td colSpan={8} style={{ padding: '15px 10px' }}>
+                                        <td colSpan={10} style={{ padding: '15px 10px' }}>
                                             <div className={styles.skeletonLine}></div>
                                         </td>
                                     </tr>
                                 ))
                             ) : sortedHistory.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
+                                    <td colSpan={10} style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
                                         📭 No bookings yet.
                                     </td>
                                 </tr>
                             ) : (
                                 sortedHistory.map((item: any) => (
                                     <tr key={item.id} style={{ borderBottom: '1px solid #f0f0f0', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#fafafa'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                                        <td style={{ padding: '12px 10px' }} title={item.timestamp.toLocaleString()}>
+                                        <td data-label="Received" style={{ padding: '12px 10px' }} title={item.timestamp.toLocaleString()}>
                                             <div className={styles.receivedTime} style={{ fontWeight: '700', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                 {item.timestamp.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                                                 {Date.now() - item.timestamp.getTime() < 120000 && (
@@ -518,15 +480,15 @@ export default function Home() {
                                                 {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </td>
-                                        <td style={{ padding: '12px 10px' }}>
+                                        <td data-label="Game Date" style={{ padding: '12px 10px' }}>
                                             <div style={{ fontWeight: '700', color: '#0369a1' }}>
                                                 {formatGameDate(item.gameDate)}
                                             </div>
                                         </td>
-                                        <td style={{ padding: '12px 10px' }}>
+                                        <td data-label="Time" style={{ padding: '12px 10px' }}>
                                             <div className={styles.gameTime}>{item.gameTime || item.bookingSlot || '-'}</div>
                                         </td>
-                                        <td style={{ padding: '12px 10px' }}>
+                                        <td data-label="Platform" style={{ padding: '12px 10px' }}>
                                             <span
                                                 className={styles.platformTag}
                                                 style={{
@@ -543,7 +505,7 @@ export default function Home() {
                                                 {item.platform}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '12px 10px' }}>
+                                        <td data-label="Sport" style={{ padding: '12px 10px' }}>
                                             <span
                                                 className={styles.sportBadge}
                                                 style={{
@@ -554,10 +516,28 @@ export default function Home() {
                                                 {item.sport || 'General'}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '12px 10px' }}>
+                                        <td data-label="Customer" style={{ padding: '12px 10px' }}>
+                                            <div style={{ fontSize: '0.85rem', color: '#334155', fontWeight: '500' }}>
+                                                {item.bookingName || 'N/A'}
+                                            </div>
+                                        </td>
+                                        <td data-label="Amount" style={{ padding: '12px 10px' }}>
+                                            <span style={{
+                                                fontSize: '0.85rem',
+                                                color: item.paidAmount !== 'N/A' ? '#15803d' : '#64748b',
+                                                background: item.paidAmount !== 'N/A' ? '#dcfce7' : '#f1f5f9',
+                                                padding: '4px 10px',
+                                                borderRadius: '6px',
+                                                fontWeight: '700',
+                                                display: 'inline-block'
+                                            }}>
+                                                {item.paidAmount || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td data-label="Location" style={{ padding: '12px 10px' }}>
                                             <div className={styles.locationText}>{item.location}</div>
                                         </td>
-                                        <td style={{ padding: '12px 10px' }}>
+                                        <td data-label="Manager" style={{ padding: '12px 10px' }}>
                                             <span style={{
                                                 fontSize: '0.8rem',
                                                 color: '#0d47a1',
@@ -569,7 +549,7 @@ export default function Home() {
                                                 {getManagerForLocation(item.location).name}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '12px 10px', color: '#666', fontSize: '0.8rem' }}>
+                                        <td data-label="Message" style={{ padding: '12px 10px', color: '#666', fontSize: '0.8rem' }}>
                                             {item.message.length > 50 ? item.message.substring(0, 50) + '...' : item.message}
                                         </td>
                                     </tr>

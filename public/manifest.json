@@ -3,9 +3,16 @@
     "short_name": "TurfAlert",
     "description": "Real-time email alert dashboard for sports bookings",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
+    "orientation": "portrait-primary",
     "background_color": "#ffffff",
     "theme_color": "#0284c7",
+    "categories": [
+        "sports",
+        "productivity",
+        "utilities"
+    ],
     "icons": [
         {
             "src": "/icon.png",

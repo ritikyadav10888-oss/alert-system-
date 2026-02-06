@@ -9,6 +9,8 @@ export interface AlertProps {
     timestamp: Date;
     bookingSlot?: string;
     sport?: string;
+    bookingName?: string;
+    paidAmount?: string;
     onDismiss: (id: string) => void;
 }
 
@@ -29,7 +31,7 @@ const getPlatformStyle = (platform: string) => {
     }
 };
 
-const AlertPopup: React.FC<AlertProps> = ({ id, platform, message, location, timestamp, bookingSlot, sport, onDismiss }) => {
+const AlertPopup: React.FC<AlertProps> = ({ id, platform, message, location, timestamp, bookingSlot, sport, bookingName, paidAmount, onDismiss }) => {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -94,6 +96,16 @@ const AlertPopup: React.FC<AlertProps> = ({ id, platform, message, location, tim
                     </div>
                 )}
                 <p className={styles.locationTitle}>📍 {location}</p>
+                {bookingName && bookingName !== 'N/A' && (
+                    <p style={{ margin: '4px 0', fontSize: '0.9rem', color: '#334155' }}>
+                        <strong>Customer:</strong> {bookingName}
+                    </p>
+                )}
+                {paidAmount && paidAmount !== 'N/A' && (
+                    <p style={{ margin: '4px 0', fontSize: '0.95rem', fontWeight: 'bold', color: '#15803d' }}>
+                        💰 {paidAmount}
+                    </p>
+                )}
                 <p className={styles.message}>{message}</p>
             </div>
         </div>

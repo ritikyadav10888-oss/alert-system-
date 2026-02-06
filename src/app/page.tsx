@@ -13,6 +13,8 @@ interface AlertItem extends AlertProps {
     gameDate?: string;
     gameTime?: string;
     sport?: string;
+    customerName?: string;
+    amount?: string;
     managerName?: string;
 }
 
@@ -477,6 +479,8 @@ export default function Home() {
                                 <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '90px', color: '#475569', fontWeight: '700' }}>Sport</th>
                                 <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '120px', color: '#475569', fontWeight: '700' }}>📍 Location</th>
                                 <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '130px', color: '#475569', fontWeight: '700' }}>👤 Notified</th>
+                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '120px', color: '#475569', fontWeight: '700' }}>Custome</th>
+                                <th style={{ padding: '15px 10px', textAlign: 'left', minWidth: '80px', color: '#475569', fontWeight: '700' }}>Amount</th>
                                 <th style={{ padding: '15px 10px', textAlign: 'left', color: '#475569', fontWeight: '700' }}>Details</th>
                             </tr>
                         </thead>
@@ -485,14 +489,14 @@ export default function Home() {
                                 // ⚡ LOADING SKELETON ROWS ⚡
                                 [1, 2, 3, 4, 5].map(i => (
                                     <tr key={`skeleton-${i}`} className={styles.skeletonRow}>
-                                        <td colSpan={8} style={{ padding: '15px 10px' }}>
+                                        <td colSpan={10} style={{ padding: '15px 10px' }}>
                                             <div className={styles.skeletonLine}></div>
                                         </td>
                                     </tr>
                                 ))
                             ) : sortedHistory.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
+                                    <td colSpan={10} style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
                                         📭 No bookings yet.
                                     </td>
                                 </tr>
@@ -568,6 +572,12 @@ export default function Home() {
                                             }}>
                                                 {getManagerForLocation(item.location).name}
                                             </span>
+                                        </td>
+                                        <td style={{ padding: '12px 10px', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>
+                                            {item.customerName || '-'}
+                                        </td>
+                                        <td style={{ padding: '12px 10px', fontSize: '0.85rem', fontWeight: '600', color: '#16a34a' }}>
+                                            {item.amount ? `₹${item.amount}` : '-'}
                                         </td>
                                         <td style={{ padding: '12px 10px', color: '#666', fontSize: '0.8rem' }}>
                                             {item.message.length > 50 ? item.message.substring(0, 50) + '...' : item.message}

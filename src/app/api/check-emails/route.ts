@@ -80,6 +80,75 @@ function extractTimeOnly(slot: string): string {
     return merged.map(m => m.start === m.end ? m.start : `${m.start} - ${m.end}`).join(' | ');
 }
 
+/**
+ * Extracts customer info (Name, Amount) based on platform logic
+ */
+function extractCustomerInfo(text: string, html: string, platform: string) {
+    let customerName = "";
+    let amount = "";
+
+    const cleanAmount = (amt: string) => {
+        // Removes symbols, keeps numbers and decimals
+        const match = amt.match(/[\d,]+(\.\d+)?/);
+        return match ? match[0] : "";
+    };
+
+    if (platform === 'Khelomore') {
+        // Name Logic
+        const nameMatch1 = html.match(/Booked by\s+([A-Za-z\s]+)/i);
+        const nameMatch2 = html.match(/Name:\s*<\/span>\s*([^<]+)/i);
+        if (nameMatch2) customerName = nameMatch2[1].trim();
+        else if (nameMatch1) customerName = nameMatch1[1].trim();
+
+        // Amount Logic
+        const amountMatch = html.match(/(&#8377;|₹)\s*([\d,]+)/);
+        if (amountMatch) amount = cleanAmount(amountMatch[2]);
+    }
+    else if (platform === 'Hudle') {
+        // Name Logic
+        const nameMatch = html.match(/Name\s*<\/strong>\s*:\s*([^<]+)/i);
+        if (nameMatch) customerName = nameMatch[1].trim();
+
+        // Amount Logic
+        const amountMatch = html.match(/Amount Paid\s*<\/strong>\s*:\s*(?:&#8377;|₹|=E2=82=B9)\s*([\d,]+(\.\d{2})?)/i);
+        if (amountMatch) {
+            amount = cleanAmount(amountMatch[1]);
+        } else {
+             // Fallback for quoted-printable encoding =E2=82=B9
+             const qpMatch = html.match(/Amount Paid\s*<\/strong>\s*:\s*.*?\s*([\d,]+(\.\d{2})?)/i);
+             if (qpMatch) amount = cleanAmount(qpMatch[1]);
+        }
+    }
+    else if (platform === 'Playo') {
+        // Name Logic: "Hey Amit,"
+        const nameMatch = html.match(/Hey\s+([^,]+),/i);
+        if (nameMatch) customerName = nameMatch[1].trim();
+
+        // Amount Logic
+        // 1. Look for "Total Amount Paid" followed by "INR X" (allowing for newlines/spaces)
+        // Note: Using [\s\S]*? instead of s flag for broader compatibility
+        const amountMatch = html.match(/Total Amount Paid[\s\S]*?INR\s*([\d,]+(\.\d+)?)/i);
+        if (amountMatch) {
+             amount = cleanAmount(amountMatch[1]);
+        } else {
+            // Fallback: Advance Paid
+             const advMatch = html.match(/Advance Paid[\s\S]*?INR\s*([\d,]+(\.\d+)?)/i);
+             if (advMatch) amount = cleanAmount(advMatch[1]);
+        }
+    }
+    else {
+        // Generic Fallback
+        const nameMatch = text.match(/(?:Name|Customer|Booked By)\s*[:|-]\s*([A-Za-z\s]+)/i);
+        if (nameMatch && nameMatch[1].length < 30) customerName = nameMatch[1].trim();
+
+        const amountMatch = text.match(/(?:Amount|Paid|Total)\s*[:|-]\s*(?:₹|INR|Rs\.?)\s*([\d,]+)/i);
+        if (amountMatch) amount = cleanAmount(amountMatch[1]);
+    }
+
+    return { customerName, amount };
+}
+
+
 export async function GET(req: Request) {
     let connection: any;
     try {
@@ -196,6 +265,8 @@ export async function GET(req: Request) {
                     if (!fullBody) continue;
 
                     const parsed = await simpleParser(fullBody);
+                    // Keep raw HTML for precise extraction, but also use cleanText for general scanning
+                    const rawHtml = parsed.html || "";
                     const cleanText = stripHtml(parsed.text || parsed.html || "").toString();
                     const normalizedText = cleanText.replace(/\r\n/g, '\n');
                     const fullText = (cand.subject + " " + normalizedText).toLowerCase();
@@ -290,6 +361,9 @@ export async function GET(req: Request) {
                         if (fullText.includes(s.toLowerCase())) { sport = s; break; }
                     }
 
+                    // 💰 EXTRACT CUSTOMER & AMOUNT
+                    const { customerName, amount } = extractCustomerInfo(normalizedText, rawHtml, cand.platform);
+
                     alerts.push({
                         id: uid.toString(),
                         platform: cand.platform,
@@ -298,6 +372,8 @@ export async function GET(req: Request) {
                         gameDate,
                         gameTime,
                         sport,
+                        customerName,
+                        amount,
                         message: cand.subject,
                         timestamp: parsed.date || cand.date || new Date()
                     });

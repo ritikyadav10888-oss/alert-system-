@@ -40,25 +40,6 @@ export default function RootLayout({
             <head>
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
-                <script
-                    dangerouslySetInnerHTML={{
-                        __html: `
-                            if ('serviceWorker' in navigator) {
-                                window.addEventListener('load', function() {
-                                    navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                                    }).catch(function(err) {
-                                        console.log('ServiceWorker registration failed: ', err);
-                                        // Auto-Repair: If registration fails, unregister all and reload
-                                        navigator.serviceWorker.getRegistrations().then(regs => {
-                                            for(let reg of regs) reg.unregister();
-                                        });
-                                    });
-                                });
-                            }
-                        `,
-                    }}
-                />
             </head>
             <body className={inter.className}>{children}</body>
         </html >
